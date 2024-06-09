@@ -18,23 +18,20 @@ class NetworkManager {
         _ request: any NetworkRequest<T>,
         with authToken: String? = nil
     ) async throws(NetworkError) -> T {
-        let (url, req) = try request.createURLRequest(authToken: authToken)
-        let data = try await kickOff(req: req, at: url, with: authToken)
+        let (url, req) = try createURLRequest(for: request, with: authToken)
+        let (data, response) = try await kickOff(req: req, at: url, with: authToken)
+        try checkStatusCode(for: response, with: data)
         // TODO: Implement retries
         return try request.responseDecoder.decode(data: data, origin: url)
     }
     
-    // TODO: Private funcs with typed throws?
-    // Why does using a private function with a typed throws in a function that's not private cause the build to fail?
-    // Is it part of the functionality somehow or just because typed throws are still in beta? 🤔
-    func kickOff(
+    private func kickOff(
         req request: URLRequest,
         at url: String,
         with authToken: String?
-    ) async throws(NetworkError) -> Data  {
-        let (data, response): (Data, URLResponse)
+    ) async throws(NetworkError) -> (Data, URLResponse)  {
         do {
-            (data, response) = try await session.data(for: request)
+            return try await session.data(for: request)
         } catch let error as URLError {
             switch error.errorCode {
             case URLError.Code.notConnectedToInternet.rawValue:
@@ -47,9 +44,15 @@ class NetworkManager {
         } catch {
             throw .transportError(error, url: url)
         }
+    }
+    
+    private func checkStatusCode(
+        for response: URLResponse,
+        with data: Data
+    ) throws(NetworkError) {
         guard let code = (response as? HTTPURLResponse)?.statusCode else {
             // Unlikely to occurr. If it's really an error, it'll show up later. Probably when trying to decode the data.
-            return data
+            return
         }
         if code == 401 { throw .unauthenticated(url: "") }
         if code == 403 { throw .restricted(url: "") }
@@ -59,7 +62,38 @@ class NetworkManager {
         if 500...599 ~= code {
             throw .serverError(code: code, data: data, url: "")
         }
-        return data
+    }
+    
+    private func createURLRequest<T>(
+        for req: any NetworkRequest<T>,
+        with authToken: String?
+    ) throws(NetworkError) -> (url: String, req: URLRequest) {
+        var components = URLComponents()
+        components.scheme = req.scheme
+        components.host = req.host
+        components.path = req.path
+        for query in req.queries {
+            if components.queryItems == nil {
+                components.queryItems = []
+            }
+            components.queryItems?
+                .append(URLQueryItem(name: query.key, value: query.value))
+        }
+        guard let url = components.url else {
+            throw .invalidUrl(scheme: req.scheme, host: req.host, path: req.path, queries: req.queries)
+        }
+        // Request construction
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = req.method.rawValue
+        urlRequest.allHTTPHeaderFields = req.headers
+        urlRequest.setValue(authToken, forHTTPHeaderField: "Authorization")
+        urlRequest.setValue(req.body?.contentType, forHTTPHeaderField: "Content-Type")
+        do {
+            urlRequest.httpBody = try req.body?.asData()
+        } catch {
+            throw .encoding(error, url: url.absoluteString)
+        }
+        return (url.absoluteString, urlRequest)
     }
 }
 
