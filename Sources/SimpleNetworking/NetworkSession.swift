@@ -42,12 +42,11 @@ class MockNetworkSession: NetworkSession {
     }
     
     private static func defaultGetData(_ urlReq: URLRequest) -> (Data, URLResponse) {
-        let data = "{}".data(using: .utf8) ?? Data()
         let response = HTTPURLResponse.mocked(
             url: urlReq.url ?? URL(filePath: ""),
             statusCode: 200
         )
-        return (data, response)
+        return (Data("{}".utf8), response)
     }
     
     func data(
@@ -57,7 +56,7 @@ class MockNetworkSession: NetworkSession {
         getData(req)
     }
     
-    func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-        try await data(for: request, delegate: nil)
+    func data(for req: URLRequest) async throws -> (Data, URLResponse) {
+        try await data(for: req, delegate: nil)
     }
 }

@@ -68,10 +68,10 @@ class NetworkManager {
         for req: any NetworkRequest<T>,
         with authToken: String?
     ) throws(NetworkError) -> (url: String, req: URLRequest) {
+        // Url construction
         var components = URLComponents()
         components.scheme = req.scheme
         components.host = req.host
-        components.path = req.path
         for query in req.queries {
             if components.queryItems == nil {
                 components.queryItems = []
@@ -79,7 +79,7 @@ class NetworkManager {
             components.queryItems?
                 .append(URLQueryItem(name: query.key, value: query.value))
         }
-        guard let url = components.url else {
+        guard let url = components.url?.appending(path: req.path) else {
             throw .invalidUrl(scheme: req.scheme, host: req.host, path: req.path, queries: req.queries)
         }
         // Request construction

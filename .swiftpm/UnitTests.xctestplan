@@ -1,0 +1,27 @@
+{
+  "configurations" : [
+    {
+      "id" : "436F68B0-AA49-4DF9-98D9-3DF7CB557EBB",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "skippedTests" : [
+        "SimpleNetworkingTests"
+      ],
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "SimpleNetworkingTests",
+        "name" : "SimpleNetworkingTests"
+      }
+    }
+  ],
+  "version" : 1
+}
