@@ -7,13 +7,13 @@
 
 import Foundation
 
-protocol RequestBody {
+protocol BodyEncoder {
     var contentType: String { get }
     func asData() throws -> Data
 }
 
 // MARK: - Implementation(s)
-struct JSONEncodableBody: RequestBody {
+struct JSONBodyEncoder: BodyEncoder {
     let contentType = "application/json"
     let encodable: Encodable
     let encoder: JSONEncoder

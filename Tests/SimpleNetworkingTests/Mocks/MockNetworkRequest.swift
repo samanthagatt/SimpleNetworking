@@ -1,6 +1,11 @@
-@testable import SimpleNetworking
+//
+//  MockNetworkRequest.swift
+//
+//
+//  Created by Samantha Gatt on 7/23/24.
+//
 
-struct EmptyResponse: Decodable, Equatable { }
+@testable import SimpleNetworking
 
 struct MockNetworkRequest<T: Decodable>: NetworkRequest {
     typealias ReturnType = T
@@ -11,6 +16,6 @@ struct MockNetworkRequest<T: Decodable>: NetworkRequest {
     var queries: [String : String] = [:]
     var headers: [String : String] = [:]
     var requiresAuth: Bool = false
-    var body: (any RequestBody)?
+    var bodyEncoder: (any BodyEncoder)?
     var responseDecoder: any ResponseDecoder<T> = JSONResponseDecoder()
 }

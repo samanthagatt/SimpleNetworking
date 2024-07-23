@@ -16,7 +16,7 @@ protocol NetworkRequest<ReturnType> {
     var queries: [String: String] { get }
     var headers: [String: String] { get }
     var requiresAuth: Bool { get }
-    var body: RequestBody? { get }
+    var bodyEncoder: BodyEncoder? { get }
     var responseDecoder: any ResponseDecoder<ReturnType> { get }
 }
 
@@ -27,7 +27,7 @@ extension NetworkRequest {
     var queries: [String: String] { [:] }
     var headers: [String: String] { [:] }
     var requiresAuth: Bool { false }
-    var body: RequestBody? { nil }
+    var bodyEncoder: BodyEncoder? { nil }
 }
 
 extension NetworkRequest where ReturnType: Decodable {

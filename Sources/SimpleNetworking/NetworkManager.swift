@@ -87,13 +87,12 @@ class NetworkManager {
         urlRequest.httpMethod = req.method.rawValue
         urlRequest.allHTTPHeaderFields = req.headers
         urlRequest.setValue(authToken, forHTTPHeaderField: "Authorization")
-        urlRequest.setValue(req.body?.contentType, forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue(req.bodyEncoder?.contentType, forHTTPHeaderField: "Content-Type")
         do {
-            urlRequest.httpBody = try req.body?.asData()
+            urlRequest.httpBody = try req.bodyEncoder?.asData()
         } catch {
             throw .encoding(error, url: url.absoluteString)
         }
         return (url.absoluteString, urlRequest)
     }
 }
-
