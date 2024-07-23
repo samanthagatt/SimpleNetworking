@@ -22,7 +22,11 @@ class NetworkManager {
         let (data, response) = try await kickOff(req: req, at: url, with: authToken)
         try checkStatusCode(for: response, with: data)
         // TODO: Implement retries
-        return try request.responseDecoder.decode(data: data, origin: url)
+        do {
+            return try request.responseDecoder.decode(data: data)
+        } catch {
+            throw .decoding(error, data: data, url: url)
+        }
     }
     
     private func kickOff(
@@ -89,7 +93,7 @@ class NetworkManager {
         for header in req.headers {
             urlRequest.addValue(header.value, forHTTPHeaderField: header.key)
         }
-        if let authToken = authToken {
+        if let authToken {
             urlRequest.setValue(authToken, forHTTPHeaderField: "Authorization")
         }
         if let bodyEncoder = req.bodyEncoder {

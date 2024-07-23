@@ -19,7 +19,7 @@ final class RequestConstructionTests: SimpleNetworkingTests {
             path: path,
             scheme: scheme
         )
-        let expectation = XCTestExpectation(description: "Kicked off network request")
+        let expectation = XCTestExpectation(description: "Kicked off network request and ran assertions")
         mockSession.getData = { urlReq in
             XCTAssertEqual(urlReq.url?.absoluteString, expected)
             expectation.fulfill()
@@ -36,7 +36,7 @@ final class RequestConstructionTests: SimpleNetworkingTests {
                 enumerated.offset < queries.count - 1 ? "&" : ""
             )
         }
-        let expectation = XCTestExpectation(description: "Kicked off network request")
+        let expectation = XCTestExpectation(description: "Kicked off network request and ran assertions")
         mockSession.getData = { urlReq in
             XCTAssert(urlReq.url?.absoluteString.hasSuffix(expected) == true)
             expectation.fulfill()
@@ -49,7 +49,7 @@ final class RequestConstructionTests: SimpleNetworkingTests {
     func testLoadAddsHeadersToReq() async throws {
         let headers = ["testHeader1": "headerValue1", "testHeader2": "headerValue2"]
         let request = MockNetworkRequest<EmptyResponse>(headers: headers)
-        let expectation = XCTestExpectation(description: "Kicked off network request")
+        let expectation = XCTestExpectation(description: "Kicked off network request and ran assertions")
         mockSession.getData = { urlReq in
             for header in headers {
                 XCTAssertEqual(header.value, urlReq.value(forHTTPHeaderField: header.key))
@@ -66,7 +66,7 @@ final class RequestConstructionTests: SimpleNetworkingTests {
         let unexpected = "not the auth token expected"
         let headers = ["Authorization": unexpected]
         let request = MockNetworkRequest<EmptyResponse>(headers: headers)
-        let expectation = XCTestExpectation(description: "Kicked off network request")
+        let expectation = XCTestExpectation(description: "Kicked off network request and ran assertions")
         mockSession.getData = { urlReq in
             let result = urlReq.value(forHTTPHeaderField: "Authorization")
             XCTAssertNotEqual(result, unexpected)
@@ -82,7 +82,7 @@ final class RequestConstructionTests: SimpleNetworkingTests {
         let expected = "expected content type"
         let headers = ["Authorization": expected]
         let request = MockNetworkRequest<EmptyResponse>(headers: headers)
-        let expectation = XCTestExpectation(description: "Kicked off network request")
+        let expectation = XCTestExpectation(description: "Kicked off network request and ran assertions")
         mockSession.getData = { urlReq in
             let result = urlReq.value(forHTTPHeaderField: "Authorization")
             XCTAssertNotNil(result)
@@ -95,16 +95,12 @@ final class RequestConstructionTests: SimpleNetworkingTests {
     }
     
     func testLoadOverridesContentHeaderIfBodyEncoderIsPresent() async throws {
-        struct MockBodyEncoder: BodyEncoder {
-            let contentType: String
-            func asData() throws -> Data { .emptyResponse }
-        }
-        let expected = "expected content type"
         let unexpected = "not the content type expected"
-        let bodyEncoder = MockBodyEncoder(contentType: expected)
         let headers = ["Content-Type": unexpected]
+        let expected = "expected content type"
+        let bodyEncoder = MockBodyEncoder(contentType: expected) { .emptyResponse }
         let request = MockNetworkRequest<EmptyResponse>(headers: headers, bodyEncoder: bodyEncoder)
-        let expectation = XCTestExpectation(description: "Kicked off network request")
+        let expectation = XCTestExpectation(description: "Kicked off network request and ran assertions")
         mockSession.getData = { urlReq in
             let result = urlReq.value(forHTTPHeaderField: "Content-Type")
             XCTAssertNotEqual(result, unexpected)
@@ -121,7 +117,7 @@ final class RequestConstructionTests: SimpleNetworkingTests {
         let expected = "expected content type"
         let headers = ["Content-Type": expected]
         let request = MockNetworkRequest<EmptyResponse>(headers: headers, bodyEncoder: nil)
-        let expectation = XCTestExpectation(description: "Kicked off network request")
+        let expectation = XCTestExpectation(description: "Kicked off network request and ran assertions")
         mockSession.getData = { urlReq in
             let result = urlReq.value(forHTTPHeaderField: "Content-Type")
             XCTAssertNotNil(result)
@@ -134,24 +130,12 @@ final class RequestConstructionTests: SimpleNetworkingTests {
     }
     
     func testLoadCallsBodyEncoder() async throws {
-        struct MockBodyEncoder: BodyEncoder {
-            let contentType = ""
-            let expectation: XCTestExpectation
-            let expectedData: Data
-            func asData() throws -> Data {
-                expectation.fulfill()
-                return expectedData
-            }
-        }
+        
         let expectedData = Data("expectedData".utf8)
         let requestSetupExpectation = XCTestExpectation(description: "Attempted to encode body")
-        let request = MockNetworkRequest<EmptyResponse>(
-            bodyEncoder: MockBodyEncoder(
-                expectation: requestSetupExpectation,
-                expectedData: expectedData
-            )
-        )
-        let performRequestExpectation = XCTestExpectation(description: "Kicked off network request")
+        let bodyEncoder = MockBodyEncoder(expectation: requestSetupExpectation) { expectedData }
+        let request = MockNetworkRequest<EmptyResponse>(bodyEncoder: bodyEncoder)
+        let performRequestExpectation = XCTestExpectation(description: "Kicked off network request and ran assertions")
         mockSession.getData = { urlReq in
             let body = try XCTUnwrap(urlReq.httpBody)
             XCTAssertEqual(body, expectedData)
@@ -166,18 +150,14 @@ final class RequestConstructionTests: SimpleNetworkingTests {
     }
     
     func testJSONBodyEncoderAddsBodyToReq() async throws {
-        struct MockBody: Codable, Equatable {
-            let first: String
-            let second: String
-        }
-        let first = "first"
-        let second = "second"
-        let expected = MockBody(first: first, second: second)
+        let first = "one"
+        let second = "two"
+        let expected = MockCodableObject(first: first, second: second)
         let request = MockNetworkRequest<EmptyResponse>(bodyEncoder: JSONBodyEncoder(from: expected))
-        let expectation = XCTestExpectation(description: "Kicked off network request")
+        let expectation = XCTestExpectation(description: "Kicked off network request and ran assertions")
         mockSession.getData = { urlReq in
             let body = try XCTUnwrap(urlReq.httpBody)
-            let result = try JSONDecoder().decode(MockBody.self, from: body)
+            let result = try JSONDecoder().decode(MockCodableObject.self, from: body)
             XCTAssertEqual(result, expected)
             expectation.fulfill()
             return (.emptyResponse, .mocked(url: urlReq.url))

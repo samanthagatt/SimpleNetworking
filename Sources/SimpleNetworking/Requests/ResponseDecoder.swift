@@ -9,10 +9,7 @@ import Foundation
 
 protocol ResponseDecoder<ReturnType> {
     associatedtype ReturnType
-    func decode(
-        data: Data,
-        origin url: String
-    ) throws(NetworkError) -> ReturnType
+    func decode(data: Data) throws -> ReturnType
 }
 
 // MARK: - Implementation(s)
@@ -23,14 +20,7 @@ struct JSONResponseDecoder<ReturnType: Decodable>: ResponseDecoder {
         self.decoder = decoder
     }
     
-    func decode(
-        data: Data,
-        origin url: String
-    ) throws(NetworkError) -> ReturnType {
-        do {
-            return try decoder.decode(ReturnType.self, from: data)
-        } catch {
-            throw .decoding(error, data: data, url: url)
-        }
+    func decode(data: Data) throws -> ReturnType {
+        try decoder.decode(ReturnType.self, from: data)
     }
 }
