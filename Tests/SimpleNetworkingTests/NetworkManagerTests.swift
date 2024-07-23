@@ -15,12 +15,12 @@ final class NetworkManagerTests: SimpleNetworkingTests {
             let expectedData: Data
             let expectedResponse: String
             func decode(data: Data, origin url: String) throws(NetworkError) -> String {
-                expectation.fulfill()
                 XCTAssertEqual(data, expectedData)
+                expectation.fulfill()
                 return expectedResponse
             }
         }
-        let expectation = XCTestExpectation(description: "Attempted to decode data")
+        let expectation = XCTestExpectation(description: "Attempted to decode response")
         let expectedResponse = "response"
         let expectedData = Data(expectedResponse.utf8)
         let mockResponseDecoder = MockResponseDecoder(
@@ -28,7 +28,7 @@ final class NetworkManagerTests: SimpleNetworkingTests {
             expectedData: expectedData,
             expectedResponse: expectedResponse
         )
-        session.getData = { urlReq in
+        mockSession.getData = { urlReq in
             (expectedData, .mocked(url: urlReq.url))
         }
         let req = MockNetworkRequest<String>(responseDecoder: mockResponseDecoder)
@@ -47,7 +47,7 @@ final class NetworkManagerTests: SimpleNetworkingTests {
         let data = try JSONEncoder().encode(expected)
         let req = MockNetworkRequest<MockResponse>(responseDecoder: JSONResponseDecoder())
         let expectation = XCTestExpectation(description: "Kicked off network request")
-        session.getData = { urlReq in
+        mockSession.getData = { urlReq in
             expectation.fulfill()
             return (data, .mocked(url: urlReq.url))
         }

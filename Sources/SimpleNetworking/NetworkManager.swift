@@ -39,10 +39,10 @@ class NetworkManager {
             case URLError.Code.timedOut.rawValue:
                 throw .timeout(url: url)
             default:
-                throw .transportError(error, url: url)
+                throw .transport(error, url: url)
             }
         } catch {
-            throw .transportError(error, url: url)
+            throw .transport(error, url: url)
         }
     }
     
@@ -57,10 +57,10 @@ class NetworkManager {
         if code == 401 { throw .unauthenticated(url: "") }
         if code == 403 { throw .restricted(url: "") }
         if 400...499 ~= code {
-            throw .clientError(code: code, data: data, url: "")
+            throw .client(code: code, data: data, url: "")
         }
         if 500...599 ~= code {
-            throw .serverError(code: code, data: data, url: "")
+            throw .server(code: code, data: data, url: "")
         }
     }
     
@@ -79,19 +79,26 @@ class NetworkManager {
             components.queryItems?
                 .append(URLQueryItem(name: query.key, value: query.value))
         }
-        guard let url = components.url?.appending(path: req.path) else {
+        guard let componentsUrl = components.url else {
             throw .invalidUrl(scheme: req.scheme, host: req.host, path: req.path, queries: req.queries)
         }
+        let url = componentsUrl.appending(path: req.path)
         // Request construction
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = req.method.rawValue
-        urlRequest.allHTTPHeaderFields = req.headers
-        urlRequest.setValue(authToken, forHTTPHeaderField: "Authorization")
-        urlRequest.setValue(req.bodyEncoder?.contentType, forHTTPHeaderField: "Content-Type")
-        do {
-            urlRequest.httpBody = try req.bodyEncoder?.asData()
-        } catch {
-            throw .encoding(error, url: url.absoluteString)
+        for header in req.headers {
+            urlRequest.addValue(header.value, forHTTPHeaderField: header.key)
+        }
+        if let authToken = authToken {
+            urlRequest.setValue(authToken, forHTTPHeaderField: "Authorization")
+        }
+        if let bodyEncoder = req.bodyEncoder {
+            urlRequest.setValue(bodyEncoder.contentType, forHTTPHeaderField: "Content-Type")
+            do {
+                urlRequest.httpBody = try bodyEncoder.asData()
+            } catch {
+                throw .encoding(error, url: url.absoluteString)
+            }
         }
         return (url.absoluteString, urlRequest)
     }

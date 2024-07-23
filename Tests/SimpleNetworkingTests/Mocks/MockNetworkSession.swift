@@ -5,8 +5,8 @@
 //  Created by Samantha Gatt on 7/23/24.
 //
 
-@testable import SimpleNetworking
 import Foundation
+@testable import SimpleNetworking
 
 class MockNetworkSession: NetworkSession {
     var getData: (URLRequest) async throws -> (Data, URLResponse)
@@ -16,7 +16,7 @@ class MockNetworkSession: NetworkSession {
     }
     
     private static func defaultGetData(_ urlReq: URLRequest) -> (Data, URLResponse) {
-        return (Data("{}".utf8), .mocked(url: urlReq.url))
+        return (.emptyResponse, .mocked(url: urlReq.url))
     }
     
     func data(

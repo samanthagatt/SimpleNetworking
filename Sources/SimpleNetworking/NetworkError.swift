@@ -12,15 +12,15 @@ enum NetworkError: CustomNSError, CustomStringConvertible, Equatable {
     /// Errors getting request to server or getting a response back
     case timeout(url: String),
          noNetwork(url: String),
-         transportError(Error, url: String)
+         transport(Error, url: String)
     /// Coding errors
     case encoding(Error, url: String),
          decoding(Error, data: Data?, url: String)
     /// Errors from parsing the `URLResponse`
     case unauthenticated(url: String),
          restricted(url: String),
-         clientError(code: Int, data: Data, url: String),
-         serverError(code: Int, data: Data, url: String)
+         client(code: Int, data: Data, url: String),
+         server(code: Int, data: Data, url: String)
     
     var path: String? {
         guard let url = URL(string: url) else { return nil }
@@ -35,13 +35,29 @@ enum NetworkError: CustomNSError, CustomStringConvertible, Equatable {
                 .decoding(_, _, let url),
                 .unauthenticated(let url),
                 .restricted(let url),
-                .clientError(_, _, let url),
-                .serverError(_, _, let url),
+                .client(_, _, let url),
+                .server(_, _, let url),
                 .timeout(let url),
                 .noNetwork(let url),
-                .transportError(_, let url):
+                .transport(_, let url):
             return url
         }
+    }
+    var caseAsString: String {
+        var result = "NetworkError."
+        switch self {
+        case .invalidUrl: result += "invalidUrl"
+        case .timeout: result += "timeout"
+        case .noNetwork: result += "noNetwork"
+        case .transport: result += "transport"
+        case .encoding: result += "encoding"
+        case .decoding: result += "decoding"
+        case .unauthenticated: result += "unauthenticated"
+        case .restricted: result += "restricted"
+        case .client: result += "client"
+        case .server: result += "server"
+        }
+        return result
     }
 }
 
@@ -52,13 +68,13 @@ extension NetworkError {
         case .invalidUrl: return 7000
         case .timeout: return 7001
         case .noNetwork: return 7002
-        case .transportError: return 7003
+        case .transport: return 7003
         case .encoding: return 7004
         case .decoding: return 7005
         case .unauthenticated: return 7006
         case .restricted: return 7007
-        case .clientError: return 7008
-        case .serverError: return 7009
+        case .client: return 7008
+        case .server: return 7009
         }
     }
     
@@ -67,14 +83,14 @@ extension NetworkError {
         switch self {
         case .invalidUrl, .timeout, .noNetwork, .unauthenticated, .restricted:
             break
-        case .transportError(let transportError, _):
+        case .transport(let transportError, _):
             result["transportError"] = transportError
         case .encoding(let encodingError, _):
             result["encodingError"] = encodingError
         case let .decoding(decodingError, data, _):
             result["decodingError"] = decodingError
             result["data"] = data as Any
-        case let .clientError(code, data, _), let .serverError(code, data, _):
+        case let .client(code, data, _), let .server(code, data, _):
             result["errorCode"] = code
             result["data"] = data
         }
@@ -103,7 +119,7 @@ extension NetworkError {
             result += "Network request timed out"
         case .noNetwork:
             result += "No network connection"
-        case .transportError(let error, _):
+        case .transport(let error, _):
             result += "Transport error:\n\(error.localizedDescription)"
         case .encoding(let encodingError, _):
             result += "Encoding failed while adding the body to the request.\n"
@@ -122,9 +138,9 @@ extension NetworkError {
             responseErrorDesc(401, "")
         case .restricted:
             responseErrorDesc(403, "")
-        case let .clientError(code: code, data: data, _):
+        case let .client(code: code, data: data, _):
             responseErrorDesc(code, String(decoding: data, as: UTF8.self))
-        case let .serverError(code, data, _):
+        case let .server(code, data, _):
             responseErrorDesc(code, String(decoding: data, as: UTF8.self))
         }
         return result
@@ -149,8 +165,8 @@ extension NetworkError {
             if case .noNetwork = rhs {
                 return true
             }
-        case .transportError(let lTransportError, _):
-            if case .transportError(let rTransportError, _) = rhs {
+        case .transport(let lTransportError, _):
+            if case .transport(let rTransportError, _) = rhs {
                 return (lTransportError as NSError) == (rTransportError as NSError)
             }
         case .encoding(let lEncodingError, _):
@@ -170,12 +186,12 @@ extension NetworkError {
             if case .restricted = rhs {
                 return true
             }
-        case let .clientError(lCode, lData, lUrl):
-            if case let .clientError(rCode, rData, rUrl) = rhs {
+        case let .client(lCode, lData, lUrl):
+            if case let .client(rCode, rData, rUrl) = rhs {
                 return lCode == rCode && lData == rData && lUrl == rUrl
             }
-        case let .serverError(lCode, lData, lUrl):
-            if case let .serverError(rCode, rData, rUrl) = rhs {
+        case let .server(lCode, lData, lUrl):
+            if case let .server(rCode, rData, rUrl) = rhs {
                 return lCode == rCode && lData == rData && lUrl == rUrl
             }
         }

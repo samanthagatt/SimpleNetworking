@@ -2,11 +2,11 @@ import XCTest
 @testable import SimpleNetworking
 
 class SimpleNetworkingTests: XCTestCase {
-    var session = MockNetworkSession()
-    lazy var sut = NetworkManager(session: session)
+    var mockSession = MockNetworkSession()
+    lazy var sut = NetworkManager(session: mockSession)
     
     override func setUp() {
-        session = MockNetworkSession()
-        sut = NetworkManager(session: session)
+        mockSession = MockNetworkSession()
+        sut = NetworkManager(session: mockSession)
     }
 }
