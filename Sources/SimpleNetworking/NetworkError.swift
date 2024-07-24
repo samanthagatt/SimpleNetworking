@@ -66,15 +66,15 @@ extension NetworkError {
     var errorCode: Int {
         switch self {
         case .invalidUrl: return 7000
-        case .timeout: return 7001
-        case .noNetwork: return 7002
-        case .transport: return 7003
-        case .encoding: return 7004
-        case .decoding: return 7005
-        case .unauthenticated: return 7006
-        case .restricted: return 7007
-        case .client: return 7008
-        case .server: return 7009
+        case .timeout: return 7010
+        case .noNetwork: return 7020
+        case .transport: return 7030
+        case .encoding: return 7040
+        case .decoding: return 7050
+        case .unauthenticated: return 7060
+        case .restricted: return 7070
+        case .client: return 7080
+        case .server: return 7090
         }
     }
     
@@ -101,7 +101,7 @@ extension NetworkError {
 // MARK: - CustomStringConvertable
 extension NetworkError {
     var description: String {
-        var result = "--- NETWORK ERROR ---\n"
+        var result = "\n--- NETWORK ERROR ---\n"
         result += "Originating from request to url: \(url)\n"
         func responseErrorDesc(_ code: Int, _ response: String) {
             result += "Network request resulted in a \(code) status code."
@@ -143,7 +143,7 @@ extension NetworkError {
         case let .server(code, data, _):
             responseErrorDesc(code, String(decoding: data, as: UTF8.self))
         }
-        return result
+        return result + "\n"
     }
 }
 
@@ -186,13 +186,13 @@ extension NetworkError {
             if case .restricted = rhs {
                 return true
             }
-        case let .client(lCode, lData, lUrl):
-            if case let .client(rCode, rData, rUrl) = rhs {
-                return lCode == rCode && lData == rData && lUrl == rUrl
+        case let .client(lCode, lData, _):
+            if case let .client(rCode, rData, _) = rhs {
+                return lCode == rCode && lData == rData
             }
-        case let .server(lCode, lData, lUrl):
-            if case let .server(rCode, rData, rUrl) = rhs {
-                return lCode == rCode && lData == rData && lUrl == rUrl
+        case let .server(lCode, lData, _):
+            if case let .server(rCode, rData, _) = rhs {
+                return lCode == rCode && lData == rData
             }
         }
         return false
