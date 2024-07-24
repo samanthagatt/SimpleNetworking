@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum NetworkError: CustomNSError, CustomStringConvertible, Equatable {
+public enum NetworkError: CustomNSError, CustomStringConvertible, Equatable {
     case invalidUrl(scheme: String?, host: String, path: String, queries: [String: String])
     /// Errors getting request to server or getting a response back
     case timeout(url: String),
@@ -21,7 +21,9 @@ enum NetworkError: CustomNSError, CustomStringConvertible, Equatable {
          restricted(url: String),
          client(code: Int, data: Data, url: String),
          server(code: Int, data: Data, url: String)
-    
+}
+ 
+public extension NetworkError {
     var path: String? {
         guard let url = URL(string: url) else { return nil }
         return URLComponents(url: url, resolvingAgainstBaseURL: true)?.path
@@ -62,7 +64,7 @@ enum NetworkError: CustomNSError, CustomStringConvertible, Equatable {
 }
 
 // MARK: - CustomNSError
-extension NetworkError {
+public extension NetworkError {
     var errorCode: Int {
         switch self {
         case .invalidUrl: return 7000
@@ -99,7 +101,7 @@ extension NetworkError {
 }
 
 // MARK: - CustomStringConvertable
-extension NetworkError {
+public extension NetworkError {
     var description: String {
         var result = "\n--- NETWORK ERROR ---\n"
         result += "Originating from request to url: \(url)\n"
@@ -148,7 +150,7 @@ extension NetworkError {
 }
 
 // MARK: - Equatable
-extension NetworkError {
+public extension NetworkError {
     static func == (lhs: NetworkError, rhs: NetworkError) -> Bool {
         // Bail out early
         guard lhs.url == rhs.url else { return false }

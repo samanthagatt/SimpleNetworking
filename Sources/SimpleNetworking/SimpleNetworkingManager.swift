@@ -7,11 +7,11 @@
 
 import Foundation
 
-protocol SimpleNetworkingManager: AnyObject {
+public protocol SimpleNetworkingManager: AnyObject {
     var session: NetworkSession { get }
 }
 
-extension SimpleNetworkingManager {
+public extension SimpleNetworkingManager {
     func load<T>(
         _ request: any NetworkRequest<T>,
         with authToken: String?
@@ -26,8 +26,10 @@ extension SimpleNetworkingManager {
             throw .decoding(error, data: data, url: url)
         }
     }
-    
-    private func kickOff(
+}
+
+private extension SimpleNetworkingManager {
+    func kickOff(
         req request: URLRequest,
         at url: String,
         with authToken: String?
@@ -48,7 +50,7 @@ extension SimpleNetworkingManager {
         }
     }
     
-    private func checkStatusCode(
+    func checkStatusCode(
         for response: URLResponse,
         with data: Data
     ) throws(NetworkError) {
@@ -66,7 +68,7 @@ extension SimpleNetworkingManager {
         }
     }
     
-    private func createURLRequest<T>(
+    func createURLRequest<T>(
         for req: any NetworkRequest<T>,
         with authToken: String?
     ) throws(NetworkError) -> (url: String, req: URLRequest) {

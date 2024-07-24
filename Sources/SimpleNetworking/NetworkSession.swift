@@ -8,7 +8,7 @@
 import Foundation
 
 // MARK: Dependency
-protocol NetworkSession: AnyObject {
+public protocol NetworkSession: AnyObject {
     func data(
         for request: URLRequest,
         delegate: (any URLSessionTaskDelegate)?

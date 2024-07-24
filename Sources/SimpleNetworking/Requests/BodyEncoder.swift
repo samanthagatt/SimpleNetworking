@@ -7,17 +7,19 @@
 
 import Foundation
 
-protocol BodyEncoder {
+public protocol BodyEncoder {
     var contentType: String { get }
     func asData() throws -> Data
 }
 
 // MARK: - Implementation(s)
-struct JSONBodyEncoder: BodyEncoder {
-    let contentType = "application/json"
-    let encodable: Encodable
-    let encoder: JSONEncoder
-    
+public struct JSONBodyEncoder: BodyEncoder {
+    public let contentType = "application/json"
+    public let encodable: Encodable
+    public let encoder: JSONEncoder
+}
+
+public extension JSONBodyEncoder {
     init(from encodable: Encodable, using encoder: JSONEncoder = JSONEncoder()) {
         self.encodable = encodable
         self.encoder = encoder

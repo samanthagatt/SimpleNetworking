@@ -7,14 +7,14 @@
 
 import Foundation
 
-class NetworkManager: SimpleNetworkingManager {
-    let session: NetworkSession
+public class NetworkManager: SimpleNetworkingManager {
+    public let session: NetworkSession
     
-    init(session: NetworkSession = URLSession.shared) {
+    public init(session: NetworkSession = URLSession.shared) {
         self.session = session
     }
     
-    func load<T>(_ request: any NetworkRequest<T>) async throws(NetworkError) -> T {
+    public func load<T>(_ request: any NetworkRequest<T>) async throws(NetworkError) -> T {
         try await load(request, with: nil)
     }
 }

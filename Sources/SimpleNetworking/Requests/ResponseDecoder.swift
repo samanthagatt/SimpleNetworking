@@ -7,20 +7,16 @@
 
 import Foundation
 
-protocol ResponseDecoder<ReturnType> {
+public protocol ResponseDecoder<ReturnType> {
     associatedtype ReturnType
     func decode(data: Data) throws -> ReturnType
 }
 
 // MARK: - Implementation(s)
-struct JSONResponseDecoder<ReturnType: Decodable>: ResponseDecoder {
-    var decoder: JSONDecoder
+public struct JSONResponseDecoder<ReturnType: Decodable>: ResponseDecoder {
+    var decoder: JSONDecoder = JSONDecoder()
     
-    init(_ decoder: JSONDecoder = JSONDecoder()) {
-        self.decoder = decoder
-    }
-    
-    func decode(data: Data) throws -> ReturnType {
+    public func decode(data: Data) throws -> ReturnType {
         try decoder.decode(ReturnType.self, from: data)
     }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol NetworkRequest<ReturnType> {
+public protocol NetworkRequest<ReturnType> {
     associatedtype ReturnType
     var method: RequestMethod { get }
     var scheme: String? { get }
@@ -21,7 +21,7 @@ protocol NetworkRequest<ReturnType> {
 }
 
 // MARK: - Defaults
-extension NetworkRequest {
+public extension NetworkRequest {
     var method: RequestMethod { .get }
     var scheme: String? { nil }
     var queries: [String: String] { [:] }
@@ -30,6 +30,6 @@ extension NetworkRequest {
     var bodyEncoder: BodyEncoder? { nil }
 }
 
-extension NetworkRequest where ReturnType: Decodable {
+public extension NetworkRequest where ReturnType: Decodable {
     var responseDecoder: any ResponseDecoder<ReturnType> { JSONResponseDecoder() }
 }
