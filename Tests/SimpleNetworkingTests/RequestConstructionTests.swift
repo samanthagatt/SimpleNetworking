@@ -8,7 +8,7 @@
 import XCTest
 @testable import SimpleNetworking
 
-final class RequestConstructionTests: SimpleNetworkingTests {
+final class RequestConstructionTests: NetworkManagerTests {
     func testLoadConstructsUrl() async throws {
         let scheme = "testScheme"
         let host = "testUrl.test"
@@ -167,15 +167,9 @@ final class RequestConstructionTests: SimpleNetworkingTests {
     }
     
     func testJSONBodyEncoderThrowsEncodingErrorWhenItFails() async throws {
-        struct FailingEncodableBody: Encodable {
-            let infinity: Double = .infinity
-        }
         let body = FailingEncodableBody()
         let request = MockNetworkRequest<EmptyResponse>(bodyEncoder: JSONBodyEncoder(from: body))
-        do {
-            _ = try await sut.load(request)
-            XCTFail("Expected an error to be thrown")
-        } catch {
+        await assertLoadThrows(request) { error in
             guard case .encoding = error else {
                 XCTFail("Expected NetworkError.encoding to be thrown but \(error.caseAsString) was thrown instead")
                 return

@@ -45,6 +45,7 @@ public extension NetworkError {
             return url
         }
     }
+    
     var caseAsString: String {
         var result = "NetworkError."
         switch self {
