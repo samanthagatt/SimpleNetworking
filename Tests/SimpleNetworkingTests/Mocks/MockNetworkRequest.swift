@@ -15,7 +15,6 @@ struct MockNetworkRequest<T: Decodable>: NetworkRequest {
     var scheme: String? = "https"
     var queries: [String : String] = [:]
     var headers: [String : String] = [:]
-    var requiresAuth: Bool = false
     var bodyEncoder: (any BodyEncoder)?
     var responseDecoder: any ResponseDecoder<T> = JSONResponseDecoder()
 }

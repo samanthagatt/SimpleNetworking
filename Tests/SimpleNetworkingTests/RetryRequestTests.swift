@@ -9,8 +9,8 @@ import XCTest
 @testable import SimpleNetworking
 
 final class RetryRequestTests: NetworkManagerTests {
-    func testSettingDefaultAttemptsLessThanOneStillPerformsReqOnce() async throws {
-        sut.defaultAttemptCount = -3
+    func testSettingDefaultRetryLimitToZeroStillPerformsReqOnce() async throws {
+        sut.defaultRetryLimit = 0
         var performCount = 0
         mockSession.getData = { urlReq in
             performCount += 1
@@ -20,11 +20,11 @@ final class RetryRequestTests: NetworkManagerTests {
         XCTAssertEqual(performCount, 1)
     }
     
-    func testSettingDefaultAttemptsPerformsReqCorrectNumberOfTimes() async throws {
-        let expectedCount = 5
-        sut.defaultAttemptCount = expectedCount
+    func testSettingDefaultRetryLimitPerformsReqCorrectNumberOfTimes() async throws {
+        let expectedCount: UInt = 5
+        sut.defaultRetryLimit = expectedCount - 1
         sut.defaultShouldRetry = { _ in true }
-        var performCount = 0
+        var performCount: UInt = 0
         mockSession.getData = { urlReq in
             performCount += 1
             throw NSError(domain: "testing", code: 101)
@@ -35,25 +35,25 @@ final class RetryRequestTests: NetworkManagerTests {
     }
     
     func testSpecifyingAttemptCountOverridesDefaultAttemptCount() async throws {
-        let expectedCount = 2
-        let notExpectedCount = 5
-        sut.defaultAttemptCount = notExpectedCount
+        let expectedCount: UInt = 2
+        let notExpectedCount: UInt = 5
+        sut.defaultRetryLimit = notExpectedCount - 1
         sut.defaultShouldRetry = { _ in true }
-        var performCount = 0
+        var performCount: UInt = 0
         mockSession.getData = { urlReq in
             performCount += 1
             throw NSError(domain: "testing", code: 142)
         }
-        await assertLoadThrows(mockReq, attemptCount: expectedCount) { _ in }
+        await assertLoadThrows(mockReq, retryLimit: expectedCount - 1) { _ in }
         XCTAssertEqual(performCount, expectedCount)
         XCTAssertNotEqual(performCount, notExpectedCount)
     }
     
     func testLoadDoesNOTRetryIfFirstAttemptWasSuccessful() async throws {
-        let maxAttemptCount = 5
-        sut.defaultAttemptCount = maxAttemptCount
+        let maxAttemptCount: UInt = 5
+        sut.defaultRetryLimit = maxAttemptCount - 1
         sut.defaultShouldRetry = { _ in true }
-        var performCount = 0
+        var performCount: UInt = 0
         mockSession.getData = { urlReq in
             performCount += 1
             return (.emptyResponse, .mocked(url: urlReq.url))
@@ -64,11 +64,11 @@ final class RetryRequestTests: NetworkManagerTests {
     }
     
     func testLoadStopsRetryingIfSubsequentAttemptWasSuccessful() async throws {
-        let maxAttemptCount = 5
+        let maxAttemptCount: UInt = 5
         let expectedCount = maxAttemptCount - 2
-        sut.defaultAttemptCount = maxAttemptCount
+        sut.defaultRetryLimit = maxAttemptCount - 1
         sut.defaultShouldRetry = { _ in true }
-        var performCount = 0
+        var performCount: UInt = 0
         mockSession.getData = { urlReq in
             performCount += 1
             if performCount < expectedCount {
@@ -89,11 +89,11 @@ final class RetryRequestTests: NetworkManagerTests {
         file: StaticString = #file,
         line: UInt = #line
     ) async throws {
-        let expectedCount = shouldFailBeforeSessionReq ? 0 : 1
-        let maxAttemptCount = 10
+        let expectedCount: UInt = shouldFailBeforeSessionReq ? 0 : 1
+        let maxAttemptCount: UInt = 10
         sut.defaultShouldRetry = NetworkManager.generalShouldRetry
-        sut.defaultAttemptCount = maxAttemptCount
-        var performCount = 0
+        sut.defaultRetryLimit = maxAttemptCount - 1
+        var performCount: UInt = 0
         mockSession.getData = { urlReq in
             performCount += 1
             let (data, code) = try result()
@@ -160,10 +160,10 @@ final class RetryRequestTests: NetworkManagerTests {
     func assertGeneralRetryRetries(
         getData: @escaping () throws -> (Data, URLResponse)
     ) async throws {
-        let expectedAttemptCount = 4
+        let expectedAttemptCount: UInt = 4
         sut.defaultShouldRetry = NetworkManager.generalShouldRetry
-        sut.defaultAttemptCount = expectedAttemptCount
-        var performCount = 0
+        sut.defaultRetryLimit = expectedAttemptCount - 1
+        var performCount: UInt = 0
         mockSession.getData = { urlReq in
             performCount += 1
             return try getData()

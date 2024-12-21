@@ -9,34 +9,37 @@ import Foundation
 
 public class NetworkManager {
     public let session: NetworkSession
-    public var defaultAttemptCount: Int
+    public var defaultRetryLimit: UInt
     public var defaultShouldRetry: (NetworkError) -> Bool
     
     /// - parameters:
-    ///     - defaultAttemptCount: Total number of times a single request will be attempted, including the initial attempt. If this is set to 3 and a request fails, it will be retried at most 2 more times. Will always attempt a request at least once.
-    ///     - defaultShouldRetry: If a closure is not provided, failed requests will only retry if they resulted in  timeout, transport, or server errors
+    ///     - defaultRetryLimit: Total number of times a single request will be retried by default, not including the initial attempt. If this is set to 3 and a request fails, it will be retried at most 3 more times. The request will always be attempted at least once. This can be overriden when calling `.load()`.
+    ///     - defaultShouldRetry: A default closure used to determine if the request should be retried based off of the most recent error. If a closure is not provided, failed requests will only be retried if they resulted in timeout, transport, or server errors. This can be overriden when calling `.load()`.
     public init(
         session: NetworkSession = URLSession.shared,
-        defaultAttemptCount: Int = 3,
+        defaultRetryLimit: UInt = 0,
         defaultShouldRetry: @escaping (NetworkError) -> Bool = generalShouldRetry
     ) {
         self.session = session
-        self.defaultAttemptCount = defaultAttemptCount
+        self.defaultRetryLimit = defaultRetryLimit
         self.defaultShouldRetry = defaultShouldRetry
     }
 }
 
 public extension NetworkManager {
+    /// - parameters:
+    ///     - request: The request to be sent
+    ///     - authToken: The authentication token to be added to the request. This will override the "Authorization" request header.
+    ///     - retryLimit: Total number of times a single request will be retried, not including the initial attempt. If this is set to 3 and a request fails, it will be retried at most 3 more times. The request will always be attempted at least once. This overrides `defaultRetryLimit`.
+    ///     - shouldRetry: A closure used to determine if the request should be retried based off of the most recent error. This overrides `defaultShouldRetry`.
     func load<T>(
         _ request: any NetworkRequest<T>,
         with authToken: String? = nil,
-        attemptCount: Int? = nil,
+        retryLimit: UInt? = nil,
         shouldRetry: ((NetworkError) -> Bool)? = nil
     ) async throws(NetworkError) -> T {
         var result = await perform(request, with: authToken)
-        var count = attemptCount ?? defaultAttemptCount
-        count = count >= 1 ? count : 1
-        for _ in 1..<count {
+        for _ in 0..<(retryLimit ?? defaultRetryLimit) {
             guard case let .failure(error) = result,
                   (shouldRetry ?? defaultShouldRetry)(error) else { break }
             result = await perform(request, with: authToken)
@@ -47,6 +50,7 @@ public extension NetworkManager {
         }
     }
     
+    /// Only returns `true` when a request results in timeout, transport, or server errors.
     static func generalShouldRetry(error: NetworkError) -> Bool {
         switch error {
         case .invalidUrl, .noNetwork, .encoding, .decoding,

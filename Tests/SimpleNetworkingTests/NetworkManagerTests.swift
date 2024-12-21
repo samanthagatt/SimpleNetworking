@@ -10,7 +10,7 @@ class NetworkManagerTests: XCTestCase {
         mockSession = MockNetworkSession()
         sut = NetworkManager(
             session: mockSession,
-            defaultAttemptCount: 1,
+            defaultRetryLimit: 1,
             defaultShouldRetry: { _ in false }
         )
     }
@@ -18,7 +18,7 @@ class NetworkManagerTests: XCTestCase {
     func assertLoadThrows<T>(
         _ request: any NetworkRequest<T>,
         with authToken: String? = nil,
-        attemptCount: Int? = nil,
+        retryLimit: UInt? = nil,
         shouldRetry: ((NetworkError) -> Bool)? = nil,
         evaluation: (NetworkError) -> Void,
         message: String = "Expected load to throw an error",
@@ -29,7 +29,7 @@ class NetworkManagerTests: XCTestCase {
             try await sut.load(
                 request,
                 with: authToken,
-                attemptCount: attemptCount,
+                retryLimit: retryLimit,
                 shouldRetry: shouldRetry
             ),
             message: message,
